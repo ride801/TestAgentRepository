@@ -116,6 +116,11 @@ export class GameBoardComponent implements OnInit {
 
   onHexClick(hex: HexTile): void {
     console.log('Hex clicked:', hex);
+    
+    // If in place robber phase, place the robber on this hex
+    if (this.gameState.phase === 'placeRobber') {
+      this.gameService.placeRobber(hex.id);
+    }
   }
 
   onVertexClick(vertexId: number, event: MouseEvent): void {

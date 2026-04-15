@@ -159,7 +159,95 @@ private createVerticesAndEdges(hexTiles: HexTile[]): { vertices: Vertex[], edges
     }
   });
 
+  // Get hex neighbors and update vertex-hex relationships for shared vertices
+  const hexNeighbors = this.getHexNeighbors();
+  
+  hexTiles.forEach(hex => {
+    const neighbors = hexNeighbors[hex.id] || [];
+    
+    neighbors.forEach(neighborInfo => {
+      const neighborHex = hexTiles.find(h => h.id === neighborInfo.hexId);
+      if (neighborHex) {
+        // Vertices are shared between adjacent hexes
+        // For each shared edge between hex and neighbor, the two vertices of that edge are shared
+        const sharedVertices = this.getSharedVertices(hex.id, neighborHex.id, neighborInfo.direction);
+        
+        sharedVertices.forEach(vertexPair => {
+          const v1 = vertices[vertexPair.v1];
+          const v2 = vertices[vertexPair.v2];
+          
+          if (v1 && v2) {
+            // Both vertices represent the same physical location
+            // Add neighbor hex to both vertices' adjacentHexes if not already there
+            if (!v1.adjacentHexes.includes(neighborHex.id)) {
+              v1.adjacentHexes.push(neighborHex.id);
+            }
+            if (!v2.adjacentHexes.includes(hex.id)) {
+              v2.adjacentHexes.push(hex.id);
+            }
+          }
+        });
+      }
+    });
+  });
+
   return { vertices, edges };
+}
+
+private getHexNeighbors(): { [hexId: number]: Array<{ hexId: number, direction: number }> } {
+  // Standard Catan board neighbor relationships
+  // Direction: 0=top-right, 1=right, 2=bottom-right, 3=bottom-left, 4=left, 5=top-left
+  return {
+    0: [{ hexId: 1, direction: 1 }, { hexId: 3, direction: 2 }, { hexId: 4, direction: 3 }],
+    1: [{ hexId: 0, direction: 4 }, { hexId: 2, direction: 1 }, { hexId: 4, direction: 3 }, { hexId: 5, direction: 2 }],
+    2: [{ hexId: 1, direction: 4 }, { hexId: 5, direction: 3 }, { hexId: 6, direction: 2 }],
+    3: [{ hexId: 0, direction: 5 }, { hexId: 4, direction: 1 }, { hexId: 7, direction: 2 }, { hexId: 8, direction: 3 }],
+    4: [{ hexId: 0, direction: 0 }, { hexId: 1, direction: 5 }, { hexId: 3, direction: 4 }, { hexId: 5, direction: 1 }, { hexId: 8, direction: 3 }, { hexId: 9, direction: 2 }],
+    5: [{ hexId: 1, direction: 0 }, { hexId: 2, direction: 5 }, { hexId: 4, direction: 4 }, { hexId: 6, direction: 1 }, { hexId: 9, direction: 3 }, { hexId: 10, direction: 2 }],
+    6: [{ hexId: 2, direction: 0 }, { hexId: 5, direction: 4 }, { hexId: 10, direction: 3 }, { hexId: 11, direction: 2 }],
+    7: [{ hexId: 3, direction: 0 }, { hexId: 8, direction: 1 }, { hexId: 12, direction: 2 }],
+    8: [{ hexId: 3, direction: 0 }, { hexId: 4, direction: 0 }, { hexId: 7, direction: 4 }, { hexId: 9, direction: 1 }, { hexId: 12, direction: 3 }, { hexId: 13, direction: 2 }],
+    9: [{ hexId: 4, direction: 0 }, { hexId: 5, direction: 0 }, { hexId: 8, direction: 4 }, { hexId: 10, direction: 1 }, { hexId: 13, direction: 3 }, { hexId: 14, direction: 2 }],
+    10: [{ hexId: 5, direction: 0 }, { hexId: 6, direction: 0 }, { hexId: 9, direction: 4 }, { hexId: 11, direction: 1 }, { hexId: 14, direction: 3 }, { hexId: 15, direction: 2 }],
+    11: [{ hexId: 6, direction: 0 }, { hexId: 10, direction: 4 }, { hexId: 15, direction: 3 }],
+    12: [{ hexId: 7, direction: 0 }, { hexId: 8, direction: 0 }, { hexId: 13, direction: 1 }, { hexId: 16, direction: 2 }],
+    13: [{ hexId: 8, direction: 0 }, { hexId: 9, direction: 0 }, { hexId: 12, direction: 4 }, { hexId: 14, direction: 1 }, { hexId: 16, direction: 3 }, { hexId: 17, direction: 2 }],
+    14: [{ hexId: 9, direction: 0 }, { hexId: 10, direction: 0 }, { hexId: 13, direction: 4 }, { hexId: 15, direction: 1 }, { hexId: 17, direction: 3 }, { hexId: 18, direction: 2 }],
+    15: [{ hexId: 10, direction: 0 }, { hexId: 11, direction: 0 }, { hexId: 14, direction: 4 }, { hexId: 18, direction: 3 }],
+    16: [{ hexId: 12, direction: 0 }, { hexId: 13, direction: 0 }, { hexId: 17, direction: 1 }],
+    17: [{ hexId: 13, direction: 0 }, { hexId: 14, direction: 0 }, { hexId: 16, direction: 4 }, { hexId: 18, direction: 1 }],
+    18: [{ hexId: 14, direction: 0 }, { hexId: 15, direction: 0 }, { hexId: 17, direction: 4 }]
+  };
+}
+
+private getSharedVertices(hexId1: number, hexId2: number, direction: number): Array<{ v1: number, v2: number }> {
+  // Returns pairs of vertex IDs that represent the same physical location
+  // v1 is from hexId1, v2 is from hexId2
+  // Direction is from hexId1's perspective
+  
+  // Hexagon vertices are numbered 0-5 clockwise from top
+  // When two hexes share an edge, two vertices are shared
+  // Direction 0 (top-right): vertices 0,1 of hex1 = vertices 3,4 of hex2
+  // Direction 1 (right): vertices 1,2 of hex1 = vertices 4,5 of hex2
+  // Direction 2 (bottom-right): vertices 2,3 of hex1 = vertices 5,0 of hex2
+  // Direction 3 (bottom-left): vertices 3,4 of hex1 = vertices 0,1 of hex2
+  // Direction 4 (left): vertices 4,5 of hex1 = vertices 1,2 of hex2
+  // Direction 5 (top-left): vertices 5,0 of hex1 = vertices 2,3 of hex2
+  
+  const mappings = [
+    [{ v1: 0, v2: 3 }, { v1: 1, v2: 4 }], // direction 0
+    [{ v1: 1, v2: 4 }, { v1: 2, v2: 5 }], // direction 1
+    [{ v1: 2, v2: 5 }, { v1: 3, v2: 0 }], // direction 2
+    [{ v1: 3, v2: 0 }, { v1: 4, v2: 1 }], // direction 3
+    [{ v1: 4, v2: 1 }, { v1: 5, v2: 2 }], // direction 4
+    [{ v1: 5, v2: 2 }, { v1: 0, v2: 3 }]  // direction 5
+  ];
+  
+  const pairs = mappings[direction];
+  return pairs.map(p => ({
+    v1: hexId1 * 6 + p.v1,
+    v2: hexId2 * 6 + p.v2
+  }));
 }
 
   private createDevelopmentCardDeck(): DevelopmentCard[] {
@@ -229,6 +317,39 @@ private createVerticesAndEdges(hexTiles: HexTile[]): { vertices: Vertex[], edges
         this.discardRandomResources(player, toDiscard);
       }
     });
+    // Note: Phase is already set to PLACE_ROBBER in rollDice() method
+    console.log('Seven rolled! Current player must move the robber.');
+  }
+
+  placeRobber(hexId: number): boolean {
+    const state = this.gameState$.value;
+    if (!state || state.phase !== GamePhase.PLACE_ROBBER) return false;
+
+    const targetHex = state.hexTiles.find(h => h.id === hexId);
+    if (!targetHex) return false;
+
+    // Can't place robber on current robber location
+    if (targetHex.hasRobber) {
+      console.log('Robber is already on this hex!');
+      return false;
+    }
+
+    // Remove robber from current location
+    const currentRobberHex = state.hexTiles.find(h => h.hasRobber);
+    if (currentRobberHex) {
+      currentRobberHex.hasRobber = false;
+    }
+
+    // Place robber on new hex
+    targetHex.hasRobber = true;
+    console.log(`Robber moved to ${targetHex.terrain} hex (${targetHex.number})`);
+
+    // TODO: Allow player to steal a resource from an opponent with a building on this hex
+    // For now, just advance to main phase
+    state.phase = GamePhase.MAIN;
+
+    this.gameState$.next(state);
+    return true;
   }
 
   private discardRandomResources(player: Player, count: number): void {
@@ -247,24 +368,92 @@ private createVerticesAndEdges(hexTiles: HexTile[]): { vertices: Vertex[], edges
     // Find all hexes with the rolled number
     const matchingHexes = state.hexTiles.filter(hex => hex.number === diceRoll && !hex.hasRobber);
 
+    // Track which buildings have already received resources (globally, not per hex)
+    // Key: "playerId_buildingType_locationKey"
+    const processedBuildings = new Set<string>();
+
     matchingHexes.forEach(hex => {
+      console.log(`Processing hex ${hex.id}: ${hex.terrain}, number ${hex.number}`);
+      
       // Find all vertices adjacent to this hex
       const adjacentVertices = state.vertices.filter(v => v.adjacentHexes.includes(hex.id));
 
       adjacentVertices.forEach(vertex => {
         if (vertex.building) {
-          const player = state.players.find(p => p.id === vertex.building!.playerId);
-          if (player) {
-            const resource = this.getResourceFromTerrain(hex.terrain);
-            if (resource) {
-              const multiplier = vertex.building.type === BuildingType.CITY ? 2 : 1;
-              const currentAmount = player.resources.get(resource) || 0;
-              player.resources.set(resource, currentAmount + multiplier);
+          // Create a unique key for this building location
+          const locationKey = this.getBuildingLocationKey(state, vertex.id);
+          const buildingKey = `${vertex.building.playerId}_${vertex.building.type}_${locationKey}`;
+          
+          // Only process if we haven't already awarded resources for this building
+          if (!processedBuildings.has(buildingKey)) {
+            processedBuildings.add(buildingKey);
+            
+            const player = state.players.find(p => p.id === vertex.building!.playerId);
+            if (player) {
+              // Get ALL hexes this building touches by checking equivalent vertices
+              const allAdjacentHexes = this.getAllAdjacentHexes(state, vertex.id);
+              
+              // Award resources from ALL matching hexes this building touches
+              allAdjacentHexes.forEach(hexId => {
+                const adjacentHex = state.hexTiles.find(h => h.id === hexId);
+                if (adjacentHex && adjacentHex.number === diceRoll && !adjacentHex.hasRobber) {
+                  const resource = this.getResourceFromTerrain(adjacentHex.terrain);
+                  if (resource) {
+                    const multiplier = vertex.building!.type === BuildingType.CITY ? 2 : 1;
+                    const currentAmount = player.resources.get(resource) || 0;
+                    player.resources.set(resource, currentAmount + multiplier);
+                    console.log(`Player ${player.name} received ${multiplier} ${resource} from hex ${adjacentHex.id} (${adjacentHex.terrain}, ${adjacentHex.number})`);
+                  }
+                }
+              });
             }
           }
         }
       });
     });
+  }
+
+  private getAllAdjacentHexes(state: GameState, vertexId: number): number[] {
+    // Find all vertices at the same physical location and collect all their hex IDs
+    const vertex = state.vertices.find(v => v.id === vertexId);
+    if (!vertex) return [];
+
+    const allHexes = new Set<number>();
+    
+    // Add hexes from this vertex
+    vertex.adjacentHexes.forEach(hexId => allHexes.add(hexId));
+
+    // Find all equivalent vertices (same physical location) and add their hexes
+    state.vertices.forEach(v => {
+      if (v.id !== vertexId) {
+        const sharedCount = v.adjacentHexes.filter(hexId => vertex.adjacentHexes.includes(hexId)).length;
+        if (sharedCount >= 1) {
+          // This vertex might be at the same location - add its hexes
+          v.adjacentHexes.forEach(hexId => allHexes.add(hexId));
+        }
+      }
+    });
+
+    return Array.from(allHexes);
+  }
+
+  private getBuildingLocationKey(state: GameState, vertexId: number): string {
+    // Find all vertices that represent the same physical location as this vertex
+    // (vertices that share 2+ hexes with this vertex)
+    const vertex = state.vertices.find(v => v.id === vertexId);
+    if (!vertex) return vertexId.toString();
+
+    const equivalentVertices = state.vertices
+      .filter(v => {
+        if (v.id === vertexId) return true;
+        const sharedCount = v.adjacentHexes.filter(hexId => vertex.adjacentHexes.includes(hexId)).length;
+        return sharedCount >= 2;
+      })
+      .map(v => v.id)
+      .sort((a, b) => a - b);
+
+    // Use the minimum vertex ID as the canonical identifier for this physical location
+    return equivalentVertices[0].toString();
   }
 
   private getResourceFromTerrain(terrain: TerrainType): ResourceType | null {

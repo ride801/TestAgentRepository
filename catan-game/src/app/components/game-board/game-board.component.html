@@ -121,7 +121,11 @@
       </defs>
       
       <!-- Draw hexes -->
-      <g *ngFor="let hex of hexes" class="hex-group" (click)="onHexClick(hex)">
+      <g *ngFor="let hex of hexes" 
+         class="hex-group" 
+         [class.robber-target]="gameState.phase === 'placeRobber' && !hex.hasRobber"
+         [class.cursor-pointer]="gameState.phase === 'placeRobber'"
+         (click)="onHexClick(hex)">
         <!-- Hex base with gradient -->
         <polygon
           [attr.points]="getHexPoints(hex.vertices)"
