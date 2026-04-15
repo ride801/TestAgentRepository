@@ -1,6 +1,6 @@
 ---
 description: "Use when: improving game UI/UX, enhancing visual aesthetics, reviewing game design, making game interfaces more appealing, polishing game visuals, improving user experience for games, game night aesthetics, visual design recommendations for games"
-tools: [read, search, web]
+tools: [execute/runNotebookCell, execute/testFailure, execute/getTerminalOutput, execute/killTerminal, execute/sendToTerminal, execute/createAndRunTask, execute/runInTerminal, read/getNotebookSummary, read/problems, read/readFile, read/viewImage, read/terminalSelection, read/terminalLastCommand, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, web/githubRepo, browser/openBrowserPage, browser/readPage, browser/screenshotPage, browser/navigatePage, browser/clickElement, browser/dragElement, browser/hoverElement, browser/typeInPage, browser/runPlaywrightCode, browser/handleDialog, azure-mcp/search]
 name: "UI Game Expert"
 argument-hint: "What aspect of the game UI should I review?"
 ---

@@ -1,46 +1,91 @@
 <div class="setup-container">
   <div class="setup-card">
-    <h2>Game Setup</h2>
+    <div class="title-section">
+      <div class="hex-icon">⬢</div>
+      <h2>Game Setup</h2>
+      <div class="hex-icon">⬢</div>
+    </div>
     
     <div class="setup-form">
-      <div class="form-group">
-        <label for="playerCount">Number of Players (2-6):</label>
-        <input 
-          id="playerCount"
-          type="number" 
-          [(ngModel)]="playerCount" 
-          (ngModelChange)="onPlayerCountChange()"
-          min="2" 
-          max="6"
-          class="player-count-input">
+      <div class="form-group player-count-section">
+        <label for="playerCount">
+          <span class="label-icon">👥</span>
+          Number of Players
+        </label>
+        <div class="input-wrapper">
+          <input 
+            id="playerCount"
+            type="number" 
+            [(ngModel)]="playerCount" 
+            (ngModelChange)="onPlayerCountChange()"
+            min="2" 
+            max="6"
+            class="player-count-input">
+          <span class="input-hint">2-6 Players</span>
+        </div>
       </div>
 
       <div class="players-section">
-        <h3>Player Names</h3>
-        <div *ngFor="let player of players; let i = index; trackBy: trackByPlayerId" class="player-input-group">
-          <label [for]="'player-name-' + player.id">Player {{ i + 1 }}:</label>
-          <input 
-            [id]="'player-name-' + player.id"
-            [name]="'playerName' + player.id"
-            type="text" 
-            [(ngModel)]="player.name" 
-            placeholder="Enter name"
-            maxlength="20">
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">✏️</span>
+            Player Names
+          </h3>
+          <span class="player-count-badge">{{ players.length }} Players</span>
+        </div>
+        <div class="players-list">
+          <div *ngFor="let player of players; let i = index; trackBy: trackByPlayerId" 
+               class="player-input-group" 
+               [style.animation-delay]="i * 0.1 + 's'">
+            <div class="player-color-indicator" [style.background-color]="player.color"></div>
+            <div class="player-input-content">
+              <label [for]="'player-name-' + player.id" class="player-label">
+                Player {{ i + 1 }}
+              </label>
+              <input 
+                [id]="'player-name-' + player.id"
+                [name]="'playerName' + player.id"
+                type="text" 
+                [(ngModel)]="player.name" 
+                [placeholder]="'Enter Player ' + (i + 1) + ' name'"
+                maxlength="20"
+                class="player-name-input">
+            </div>
+          </div>
         </div>
       </div>
 
       <button class="primary-btn start-btn" (click)="startGame()">
+        <span class="btn-icon">🎲</span>
         Start Game
+        <span class="btn-arrow">→</span>
       </button>
     </div>
 
     <div class="game-info">
-      <h3>How to Play</h3>
-      <ul>
-        <li>Roll dice to collect resources from adjacent hexes</li>
-        <li>Build settlements, cities, and roads</li>
-        <li>Trade resources with other players</li>
-        <li>First to 10 victory points wins!</li>
+      <div class="info-header">
+        <h3>
+          <span class="info-icon">📖</span>
+          How to Play
+        </h3>
+      </div>
+      <ul class="info-list">
+        <li>
+          <span class="list-icon">🎲</span>
+          <span>Roll dice to collect resources from adjacent hexes</span>
+        </li>
+        <li>
+          <span class="list-icon">🏠</span>
+          <span>Build settlements, cities, and roads</span>
+        </li>
+        <li>
+          <span class="list-icon">🔄</span>
+          <span>Trade resources with other players</span>
+        </li>
+        <li>
+          <span class="list-icon">🏆</span>
+          <span>First to 10 victory points wins!</span>
+        </li>
       </ul>
     </div>
   </div>
