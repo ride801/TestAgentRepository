@@ -17,11 +17,13 @@
 
       <div class="players-section">
         <h3>Player Names</h3>
-        <div *ngFor="let name of playerNames; let i = index; trackBy: trackByIndex" class="player-input-group">
-          <label>Player {{ i + 1 }}:</label>
+        <div *ngFor="let player of players; let i = index; trackBy: trackByPlayerId" class="player-input-group">
+          <label [for]="'player-name-' + player.id">Player {{ i + 1 }}:</label>
           <input 
+            [id]="'player-name-' + player.id"
+            [name]="'playerName' + player.id"
             type="text" 
-            [(ngModel)]="playerNames[i]" 
+            [(ngModel)]="player.name" 
             placeholder="Enter name"
             maxlength="20">
         </div>
