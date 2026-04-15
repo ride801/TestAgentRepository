@@ -111,34 +111,56 @@ export class GameService {
     return hexes;
   }
 
-  private createVerticesAndEdges(hexTiles: HexTile[]): { vertices: Vertex[], edges: Edge[] } {
-    const vertices: Vertex[] = [];
-    const edges: Edge[] = [];
+private createVerticesAndEdges(hexTiles: HexTile[]): { vertices: Vertex[], edges: Edge[] } {
+  const vertices: Vertex[] = [];
+  const edges: Edge[] = [];
 
-    // Create enough vertices to cover all hex vertices (19 hexes * 6 vertices = 114)
-    // Using a larger number to ensure all calculated IDs are valid
-    for (let i = 0; i < 120; i++) {
-      vertices.push({
-        id: i,
-        building: null,
-        adjacentHexes: [],
-        adjacentVertices: [],
-        adjacentEdges: []
-      });
-    }
-
-    // Create enough edges to cover all hex edges (19 hexes * 6 edges = 114)
-    for (let i = 0; i < 120; i++) {
-      edges.push({
-        id: i,
-        road: null,
-        adjacentVertices: [],
-        adjacentHexes: []
-      });
-    }
-
-    return { vertices, edges };
+  // Create enough vertices to cover all hex vertices (19 hexes * 6 vertices = 114)
+  // Using a larger number to ensure all calculated IDs are valid
+  for (let i = 0; i < 120; i++) {
+    vertices.push({
+      id: i,
+      building: null,
+      adjacentHexes: [],
+      adjacentVertices: [],
+      adjacentEdges: []
+    });
   }
+
+  // Create enough edges to cover all hex edges (19 hexes * 6 edges = 114)
+  for (let i = 0; i < 120; i++) {
+    edges.push({
+      id: i,
+      road: null,
+      adjacentVertices: [],
+      adjacentHexes: []
+    });
+  }
+
+  // Populate vertex-hex relationships
+  // Each hex has 6 vertices, vertex ID = hex.id * 6 + vertexIndex
+  hexTiles.forEach(hex => {
+    for (let i = 0; i < 6; i++) {
+      const vertexId = hex.id * 6 + i;
+      if (vertices[vertexId]) {
+        vertices[vertexId].adjacentHexes.push(hex.id);
+        
+        // Each vertex connects to the next and previous vertices on the same hex
+        const prevVertex = hex.id * 6 + ((i - 1 + 6) % 6);
+        const nextVertex = hex.id * 6 + ((i + 1) % 6);
+        
+        if (!vertices[vertexId].adjacentVertices.includes(prevVertex)) {
+          vertices[vertexId].adjacentVertices.push(prevVertex);
+        }
+        if (!vertices[vertexId].adjacentVertices.includes(nextVertex)) {
+          vertices[vertexId].adjacentVertices.push(nextVertex);
+        }
+      }
+    }
+  });
+
+  return { vertices, edges };
+}
 
   private createDevelopmentCardDeck(): DevelopmentCard[] {
     const deck: DevelopmentCard[] = [];
@@ -257,81 +279,109 @@ export class GameService {
   }
 
   buildSettlement(vertexId: number): boolean {
-    const state = this.gameState$.value;
-    if (!state) return false;
+  const state = this.gameState$.value;
+  if (!state) return false;
 
-    console.log(`buildSettlement called - vertexId: ${vertexId}, phase: ${state.phase}, player: ${state.currentPlayerIndex}`);
+  console.log(`buildSettlement called - vertexId: ${vertexId}, phase: ${state.phase}, player: ${state.currentPlayerIndex}`);
 
-    const currentPlayer = state.players[state.currentPlayerIndex];
-    const vertex = state.vertices.find(v => v.id === vertexId);
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const vertex = state.vertices.find(v => v.id === vertexId);
 
-    if (!vertex || vertex.building) {
-      console.log(`Cannot build settlement - vertex not found or already has building`);
-      return false;
-    }
-
-    // Check if adjacent vertices have buildings (distance rule)
-    const hasAdjacentBuildings = vertex.adjacentVertices.some(adjId => {
-      const adjVertex = state.vertices.find(v => v.id === adjId);
-      return adjVertex?.building !== null;
-    });
-
-    if (hasAdjacentBuildings) return false;
-
-    // In setup phase, no resource cost
-    if (state.phase === GamePhase.SETUP_SETTLEMENT_1 || state.phase === GamePhase.SETUP_SETTLEMENT_2) {
-      if (currentPlayer.settlements <= 0) return false;
-
-      vertex.building = {
-        type: BuildingType.SETTLEMENT,
-        playerId: currentPlayer.id
-      };
-
-      currentPlayer.settlements--;
-      currentPlayer.victoryPoints++;
-
-      // Move to next phase
-      if (state.phase === GamePhase.SETUP_SETTLEMENT_1) {
-        state.phase = GamePhase.SETUP_ROAD_1;
-      } else {
-        // In second setup, give resources from adjacent hexes
-        vertex.adjacentHexes.forEach(hexId => {
-          const hex = state.hexTiles.find(h => h.id === hexId);
-          if (hex && hex.terrain !== TerrainType.DESERT) {
-            const resource = this.getResourceFromTerrain(hex.terrain);
-            if (resource) {
-              currentPlayer.resources.set(resource, currentPlayer.resources.get(resource)! + 1);
-            }
-          }
-        });
-        state.phase = GamePhase.SETUP_ROAD_2;
-      }
-    } else {
-      // Normal game phase - check resources
-      if (!this.hasResources(currentPlayer, [
-        ResourceType.WOOD, ResourceType.BRICK, ResourceType.SHEEP, ResourceType.WHEAT
-      ])) return false;
-
-      if (currentPlayer.settlements <= 0) return false;
-
-      // Deduct resources
-      this.deductResources(currentPlayer, [
-        ResourceType.WOOD, ResourceType.BRICK, ResourceType.SHEEP, ResourceType.WHEAT
-      ]);
-
-      vertex.building = {
-        type: BuildingType.SETTLEMENT,
-        playerId: currentPlayer.id
-      };
-
-      currentPlayer.settlements--;
-      currentPlayer.victoryPoints++;
-    }
-
-    this.checkVictory(state);
-    this.gameState$.next(state);
-    return true;
+  if (!vertex || vertex.building) {
+    console.log(`Cannot build settlement - vertex not found or already has building`);
+    return false;
   }
+
+  // Check if adjacent vertices have buildings (distance rule)
+  const hasAdjacentBuildings = vertex.adjacentVertices.some(adjId => {
+    const adjVertex = state.vertices.find(v => v.id === adjId);
+    return adjVertex?.building !== null;
+  });
+
+  if (hasAdjacentBuildings) {
+    console.log(`Cannot build settlement - adjacent vertex has a building`);
+    return false;
+  }
+
+  const building: Building = {
+    type: BuildingType.SETTLEMENT,
+    playerId: currentPlayer.id
+  };
+
+  // In setup phase, no resource cost
+  if (state.phase === GamePhase.SETUP_SETTLEMENT_1 || state.phase === GamePhase.SETUP_SETTLEMENT_2) {
+    if (currentPlayer.settlements <= 0) return false;
+
+    // Place building on this vertex AND all equivalent vertices (same physical location)
+    this.placeBuilding(state, vertexId, building);
+
+    currentPlayer.settlements--;
+    currentPlayer.victoryPoints++;
+
+    // Move to next phase
+    if (state.phase === GamePhase.SETUP_SETTLEMENT_1) {
+      state.phase = GamePhase.SETUP_ROAD_1;
+    } else {
+      // In second setup, give resources from adjacent hexes
+      vertex.adjacentHexes.forEach(hexId => {
+        const hex = state.hexTiles.find(h => h.id === hexId);
+        if (hex && hex.terrain !== TerrainType.DESERT) {
+          const resource = this.getResourceFromTerrain(hex.terrain);
+          if (resource) {
+            currentPlayer.resources.set(resource, currentPlayer.resources.get(resource)! + 1);
+          }
+        }
+      });
+      state.phase = GamePhase.SETUP_ROAD_2;
+    }
+  } else {
+    // Normal game phase - check resources
+    if (!this.hasResources(currentPlayer, [
+      ResourceType.WOOD, ResourceType.BRICK, ResourceType.SHEEP, ResourceType.WHEAT
+    ])) return false;
+
+    if (currentPlayer.settlements <= 0) return false;
+
+    // Deduct resources
+    this.deductResources(currentPlayer, [
+      ResourceType.WOOD, ResourceType.BRICK, ResourceType.SHEEP, ResourceType.WHEAT
+    ]);
+
+    // Place building on this vertex AND all equivalent vertices
+    this.placeBuilding(state, vertexId, building);
+
+    currentPlayer.settlements--;
+    currentPlayer.victoryPoints++;
+  }
+
+  this.checkVictory(state);
+  this.gameState$.next(state);
+  return true;
+}
+
+private placeBuilding(state: GameState, primaryVertexId: number, building: Building): void {
+  // Place building on the primary vertex
+  const primaryVertex = state.vertices.find(v => v.id === primaryVertexId);
+  if (!primaryVertex) return;
+  
+  primaryVertex.building = building;
+  console.log(`Placed ${building.type} on vertex ${primaryVertexId} (hex IDs: ${primaryVertex.adjacentHexes})`);
+
+  // Find all vertices that share hex IDs with this vertex (they're at the same physical location)
+  const sharedHexes = primaryVertex.adjacentHexes;
+  if (sharedHexes.length > 0) {
+    state.vertices.forEach((vertex, index) => {
+      if (vertex.id !== primaryVertexId && !vertex.building) {
+        // Vertices at the same physical location share 2 or more hexes (corner vertices)
+        const sharedCount = vertex.adjacentHexes.filter(hexId => sharedHexes.includes(hexId)).length;
+        if (sharedCount >= 2) {
+          vertex.building = { ...building };
+          console.log(`  Also placed ${building.type} on vertex ${vertex.id} (shared ${sharedCount} hexes: ${vertex.adjacentHexes})`);
+        }
+      }
+    });
+  }
+}
 
   buildCity(vertexId: number): boolean {
     const state = this.gameState$.value;
@@ -354,7 +404,10 @@ export class GameService {
     currentPlayer.resources.set(ResourceType.WHEAT, currentPlayer.resources.get(ResourceType.WHEAT)! - 2);
 
     // Upgrade to city
-    vertex.building.type = BuildingType.CITY;
+    this.placeBuilding(state, vertexId, {
+  type: BuildingType.CITY,
+  playerId: currentPlayer.id
+}); 
     currentPlayer.cities--;
     currentPlayer.settlements++; // Return settlement to player
     currentPlayer.victoryPoints++; // City gives 1 additional VP
