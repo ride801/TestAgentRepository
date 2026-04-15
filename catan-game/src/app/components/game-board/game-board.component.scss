@@ -5,84 +5,162 @@
 }
 
 .board-container {
-  background: linear-gradient(135deg, #b8d4e8 0%, #7fb3d5 100%);
-  background-image: 
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    linear-gradient(135deg, #b8d4e8 0%, #7fb3d5 100%);
-  padding: 20px;
-  min-height: 600px;
+  /* Rich ocean/water background */
+  background: 
+    radial-gradient(ellipse at 30% 40%, rgba(100, 200, 255, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 60%, rgba(0, 150, 255, 0.2) 0%, transparent 50%),
+    repeating-linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0) 0px,
+      rgba(255, 255, 255, 0.03) 1px,
+      rgba(255, 255, 255, 0) 2px,
+      rgba(255, 255, 255, 0) 12px
+    ),
+    linear-gradient(180deg, #0d47a1 0%, #1565c0 30%, #1976d2 60%, #1e88e5 100%);
+  padding: 32px;
+  min-height: 650px;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 3px solid #8cb4d4;
+  box-shadow: 
+    inset 0 6px 20px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 4px solid rgba(100, 150, 200, 0.4);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  
+  /* Animated wave effect */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 300%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      rgba(255, 255, 255, 0.03) 10px,
+      transparent 20px,
+      transparent 40px
+    );
+    animation: waves 20s linear infinite;
+  }
+  
+  /* Subtle light rays */
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 70%
+    );
+    animation: rotate 30s linear infinite;
+    pointer-events: none;
+  }
+}
+
+@keyframes waves {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(33.33%);
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .board-svg {
   width: 100%;
-  max-width: 800px;
+  max-width: 820px;
   height: auto;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+  position: relative;
+  z-index: 1;
 
   .hex-tile {
     cursor: pointer;
-    transition: opacity 0.2s;
-
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    stroke-width: 3;
+    
     &:hover {
-      opacity: 0.8;
+      filter: brightness(1.15);
+      stroke-width: 4;
     }
   }
 
   .terrain-label {
     pointer-events: none;
     user-select: none;
+    font-weight: 800;
+    letter-spacing: 0.5px;
   }
 
   .vertex-point {
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
-      r: 8;
-      fill: #FFE082;
+      r: 9;
+      fill: #ffe082;
+      filter: drop-shadow(0 0 6px rgba(255, 193, 7, 0.8));
     }
 
     &:focus {
-      outline: 3px solid #ff9800;
+      outline: 3px solid #ffa726;
       outline-offset: 3px;
     }
   }
 
   .settlement {
     pointer-events: none;
-    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(3px 3px 4px rgba(0, 0, 0, 0.4));
+    stroke-width: 3;
   }
 
   .city {
     pointer-events: none;
-    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(4px 4px 6px rgba(0, 0, 0, 0.5));
+    stroke-width: 3;
   }
 
   .edge-line {
     cursor: pointer;
-    opacity: 0.3;
-    transition: all 0.2s;
+    opacity: 0.25;
+    transition: all 0.25s ease;
+    stroke-width: 4;
 
     &:focus {
-      outline: 3px solid #ff9800;
+      outline: 3px solid #ffa726;
       outline-offset: 3px;
-      opacity: 0.6;
+      opacity: 0.7;
     }
 
     &:hover {
       opacity: 0.6;
-      stroke-width: 5;
+      stroke-width: 6;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
     }
   }
 
   .road {
     pointer-events: none;
-    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.4));
+    stroke-width: 8;
   }
 
   text {
@@ -93,63 +171,88 @@
 
 .board-legend {
   h3 {
-    margin: 0 0 15px 0;
-    color: #333;
-    font-size: 18px;
-    border-bottom: 2px solid #4CAF50;
-    padding-bottom: 8px;
+    margin: 0 0 18px 0;
+    color: #2d1810;
+    font-size: 20px;
+    border-bottom: 3px solid #66bb6a;
+    padding-bottom: 10px;
+    font-weight: 700;
   }
 
   h4 {
-    margin: 15px 0 10px 0;
-    color: #555;
-    font-size: 16px;
+    margin: 18px 0 12px 0;
+    color: #3d2415;
+    font-size: 17px;
+    font-weight: 700;
   }
 
   .legend-items {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
   }
 
   .legend-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: rgba(102, 187, 106, 0.08);
+      transform: translateX(4px);
+    }
 
     .legend-color {
-      width: 30px;
-      height: 30px;
-      border: 2px solid #333;
-      border-radius: 5px;
+      width: 36px;
+      height: 36px;
+      border: 3px solid #333;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
 
     span {
-      color: #555;
-      font-size: 14px;
+      color: #3d2415;
+      font-size: 15px;
+      font-weight: 600;
     }
   }
 
   .instructions {
-    background: #f5f5f5;
-    padding: 15px;
-    border-radius: 5px;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #ffa726;
+    box-shadow: 0 4px 12px rgba(255, 167, 38, 0.2);
 
     ul {
-      margin: 10px 0 0 20px;
+      margin: 12px 0 0 24px;
       padding: 0;
 
       li {
-        margin-bottom: 8px;
-        color: #666;
-        line-height: 1.5;
+        margin-bottom: 10px;
+        color: #5d4e37;
+        line-height: 1.7;
+        font-weight: 500;
+        
+        &::marker {
+          color: #ffa726;
+          font-weight: bold;
+        }
       }
     }
   }
 }
 
 @media (max-width: 768px) {
+  .board-container {
+    padding: 20px;
+    min-height: 500px;
+  }
+  
   .board-svg {
     max-width: 100%;
   }
