@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GameService } from '../../services/game.service';
-import { GameState, ResourceType, GamePhase, TradeOffer } from '../../models/game.models';
+import { GameState, ResourceType, GamePhase, TradeOffer, Player } from '../../models/game.models';
 
 @Component({
   selector: 'app-player-panel',
@@ -177,5 +177,22 @@ export class PlayerPanelComponent {
 
   setTradeRequestValue(resource: ResourceType, value: number): void {
     this.tradeOffer.requesting.set(resource, value);
+  }
+
+  getPlayerById(playerId: number | null): Player | undefined {
+    if (playerId === null) return undefined;
+    return this.gameState.players.find(p => p.id === playerId);
+  }
+
+  getPlayerNameById(playerId: number | null): string {
+    const player = this.getPlayerById(playerId);
+    return player ? player.name : 'Unknown';
+  }
+
+  isSetupPhase(): boolean {
+    return this.gameState.phase === GamePhase.SETUP_SETTLEMENT_1 ||
+           this.gameState.phase === GamePhase.SETUP_SETTLEMENT_2 ||
+           this.gameState.phase === GamePhase.SETUP_ROAD_1 ||
+           this.gameState.phase === GamePhase.SETUP_ROAD_2;
   }
 }

@@ -49,7 +49,7 @@
         Main Phase - Build or Trade
       </div>
       <div *ngIf="gameState.phase === GamePhase.GAME_OVER" class="game-over">
-        Game Over! Winner: {{ gameState.players.find(p => p.id === gameState.winner)?.name }}
+        Game Over! Winner: {{ getPlayerNameById(gameState.winner) }}
       </div>
       <div *ngIf="gameState.diceRoll" class="dice-result">
         Last Roll: {{ gameState.diceRoll }}
@@ -69,7 +69,7 @@
       </button>
 
       <button 
-        *ngIf="gameState.phase === GamePhase.MAIN || gameState.phase.includes('setup')"
+        *ngIf="gameState.phase === GamePhase.MAIN || isSetupPhase()"
         class="secondary-btn action-btn"
         (click)="buildSettlement()"
         [disabled]="gameState.phase === GamePhase.MAIN && !canBuySettlement()">
@@ -85,7 +85,7 @@
       </button>
 
       <button 
-        *ngIf="gameState.phase === GamePhase.MAIN || gameState.phase.includes('setup')"
+        *ngIf="gameState.phase === GamePhase.MAIN || isSetupPhase()"
         class="secondary-btn action-btn"
         (click)="buildRoad()"
         [disabled]="gameState.phase === GamePhase.MAIN && !canBuyRoad()">
@@ -144,7 +144,7 @@
     <h3>Active Trades</h3>
     <div *ngFor="let trade of gameState.tradeOffers; let i = index" class="trade-item">
       <div class="trade-from">
-        From: {{ gameState.players.find(p => p.id === trade.offeringPlayerId)?.name }}
+        From: {{ getPlayerNameById(trade.offeringPlayerId) }}
       </div>
       <div class="trade-details">
         Offers: (see trade details)
