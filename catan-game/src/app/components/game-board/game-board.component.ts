@@ -13,9 +13,9 @@ import { GameState, HexTile, TerrainType, Point } from '../../models/game.models
 export class GameBoardComponent implements OnInit {
   @Input() gameState!: GameState;
 
-  hexSize = 50;
+  hexSize = 80;
   hexes: (HexTile & { center: Point, vertices: Point[] })[] = [];
-  viewBox = '0 0 800 700';
+  viewBox = '0 0 1200 1000';
 
   constructor(private gameService: GameService) {}
 
@@ -25,10 +25,14 @@ export class GameBoardComponent implements OnInit {
 
   calculateHexPositions(): void {
     const rows = [3, 4, 5, 4, 3];
-    const startX = 400;
-    const startY = 100;
     const hexWidth = this.hexSize * Math.sqrt(3);
     const hexHeight = this.hexSize * 2;
+    
+    // Center the widest row (5 hexes) in the viewBox
+    // The middle hex (index 2) should be at the center X (600)
+    const centerX = 600;
+    const startX = centerX - 2 * hexWidth;
+    const startY = 150;
 
     let hexIndex = 0;
 
@@ -80,6 +84,30 @@ export class GameBoardComponent implements OnInit {
       [TerrainType.DESERT]: 'url(#desertGradient)'
     };
     return colors[terrain];
+  }
+
+  getTerrainGradient(terrain: TerrainType): string {
+    const gradients: { [key in TerrainType]: string } = {
+      [TerrainType.FOREST]: 'url(#forestGradient)',
+      [TerrainType.HILLS]: 'url(#hillsGradient)',
+      [TerrainType.PASTURE]: 'url(#pastureGradient)',
+      [TerrainType.FIELDS]: 'url(#fieldsGradient)',
+      [TerrainType.MOUNTAINS]: 'url(#mountainsGradient)',
+      [TerrainType.DESERT]: 'url(#desertGradient)'
+    };
+    return gradients[terrain];
+  }
+
+  getTerrainPattern(terrain: TerrainType): string {
+    const patterns: { [key in TerrainType]: string } = {
+      [TerrainType.FOREST]: 'url(#forestPattern)',
+      [TerrainType.HILLS]: 'url(#hillsPattern)',
+      [TerrainType.PASTURE]: 'url(#pasturePattern)',
+      [TerrainType.FIELDS]: 'url(#fieldsPattern)',
+      [TerrainType.MOUNTAINS]: 'url(#mountainsPattern)',
+      [TerrainType.DESERT]: 'url(#desertPattern)'
+    };
+    return patterns[terrain];
   }
 
   getTerrainName(terrain: TerrainType): string {

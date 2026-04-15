@@ -5,6 +5,20 @@
   
   <div *ngIf="gameStarted && gameState" class="game-container">
     <app-player-panel [gameState]="gameState"></app-player-panel>
-    <app-game-board [gameState]="gameState"></app-game-board>
+    
+    <div class="board-section">
+      <!-- Game Phase Display -->
+      <div class="phase-display">
+        <div class="phase-text">
+          <span class="phase-label">Phase:</span>
+          <span class="phase-value">{{ getPhaseText(gameState) }}</span>
+        </div>
+        <div *ngIf="gameState.diceRoll" class="dice-display">
+          🎲 {{ gameState.diceRoll }}
+        </div>
+      </div>
+      
+      <app-game-board [gameState]="gameState"></app-game-board>
+    </div>
   </div>
 </div>

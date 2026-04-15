@@ -115,9 +115,9 @@ export class GameService {
     const vertices: Vertex[] = [];
     const edges: Edge[] = [];
 
-    // For simplicity, create a fixed number of vertices and edges
-    // In a real implementation, these would be calculated based on hex positions
-    for (let i = 0; i < 54; i++) {
+    // Create enough vertices to cover all hex vertices (19 hexes * 6 vertices = 114)
+    // Using a larger number to ensure all calculated IDs are valid
+    for (let i = 0; i < 120; i++) {
       vertices.push({
         id: i,
         building: null,
@@ -127,7 +127,8 @@ export class GameService {
       });
     }
 
-    for (let i = 0; i < 72; i++) {
+    // Create enough edges to cover all hex edges (19 hexes * 6 edges = 114)
+    for (let i = 0; i < 120; i++) {
       edges.push({
         id: i,
         road: null,
@@ -259,10 +260,15 @@ export class GameService {
     const state = this.gameState$.value;
     if (!state) return false;
 
+    console.log(`buildSettlement called - vertexId: ${vertexId}, phase: ${state.phase}, player: ${state.currentPlayerIndex}`);
+
     const currentPlayer = state.players[state.currentPlayerIndex];
     const vertex = state.vertices.find(v => v.id === vertexId);
 
-    if (!vertex || vertex.building) return false;
+    if (!vertex || vertex.building) {
+      console.log(`Cannot build settlement - vertex not found or already has building`);
+      return false;
+    }
 
     // Check if adjacent vertices have buildings (distance rule)
     const hasAdjacentBuildings = vertex.adjacentVertices.some(adjId => {
@@ -362,10 +368,15 @@ export class GameService {
     const state = this.gameState$.value;
     if (!state) return false;
 
+    console.log(`buildRoad called - edgeId: ${edgeId}, phase: ${state.phase}, player: ${state.currentPlayerIndex}`);
+
     const currentPlayer = state.players[state.currentPlayerIndex];
     const edge = state.edges.find(e => e.id === edgeId);
 
-    if (!edge || edge.road) return false;
+    if (!edge || edge.road) {
+      console.log(`Cannot build road - edge not found or already has road`);
+      return false;
+    }
 
     // In setup phase
     if (state.phase === GamePhase.SETUP_ROAD_1 || state.phase === GamePhase.SETUP_ROAD_2) {
@@ -374,6 +385,7 @@ export class GameService {
       edge.road = { playerId: currentPlayer.id };
       currentPlayer.roads--;
 
+      console.log('Road placed in setup phase, calling advanceSetupPhase...');
       // Move to next phase or next player
       this.advanceSetupPhase(state);
     } else {
@@ -502,21 +514,29 @@ export class GameService {
   }
 
   private advanceSetupPhase(state: GameState): void {
+    console.log(`advanceSetupPhase called - Current phase: ${state.phase}, Current player: ${state.currentPlayerIndex}, Total players: ${state.players.length}`);
+    
     if (state.phase === GamePhase.SETUP_ROAD_1) {
       if (state.currentPlayerIndex === state.players.length - 1) {
+        console.log('Transitioning from SETUP_ROAD_1 to SETUP_SETTLEMENT_2 (last player in round 1)');
         state.phase = GamePhase.SETUP_SETTLEMENT_2;
       } else {
+        console.log(`Advancing to next player: ${state.currentPlayerIndex} -> ${state.currentPlayerIndex + 1}`);
         state.currentPlayerIndex++;
         state.phase = GamePhase.SETUP_SETTLEMENT_1;
       }
     } else if (state.phase === GamePhase.SETUP_ROAD_2) {
       if (state.currentPlayerIndex === 0) {
+        console.log('Setup complete! Transitioning to ROLL_DICE phase');
         state.phase = GamePhase.ROLL_DICE;
       } else {
+        console.log(`Going to previous player: ${state.currentPlayerIndex} -> ${state.currentPlayerIndex - 1}`);
         state.currentPlayerIndex--;
         state.phase = GamePhase.SETUP_SETTLEMENT_2;
       }
     }
+    
+    console.log(`After advanceSetupPhase - New phase: ${state.phase}, New player: ${state.currentPlayerIndex}`);
   }
 
   private hasResources(player: Player, resources: ResourceType[]): boolean {

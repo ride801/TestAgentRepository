@@ -29,34 +29,6 @@
     </div>
   </div>
 
-  <!-- Game Phase Info -->
-  <div class="card phase-card">
-    <h3>Game Phase</h3>
-    <div class="phase-info">
-      <div *ngIf="gameState.phase === GamePhase.SETUP_SETTLEMENT_1 || gameState.phase === GamePhase.SETUP_SETTLEMENT_2">
-        Place a Settlement
-      </div>
-      <div *ngIf="gameState.phase === GamePhase.SETUP_ROAD_1 || gameState.phase === GamePhase.SETUP_ROAD_2">
-        Place a Road
-      </div>
-      <div *ngIf="gameState.phase === GamePhase.ROLL_DICE">
-        Roll the Dice
-      </div>
-      <div *ngIf="gameState.phase === GamePhase.PLACE_ROBBER">
-        Place the Robber
-      </div>
-      <div *ngIf="gameState.phase === GamePhase.MAIN">
-        Main Phase - Build or Trade
-      </div>
-      <div *ngIf="gameState.phase === GamePhase.GAME_OVER" class="game-over">
-        Game Over! Winner: {{ getPlayerNameById(gameState.winner) }}
-      </div>
-      <div *ngIf="gameState.diceRoll" class="dice-result">
-        Last Roll: {{ gameState.diceRoll }}
-      </div>
-    </div>
-  </div>
-
   <!-- Actions -->
   <div class="card actions-card">
     <h3>Actions</h3>

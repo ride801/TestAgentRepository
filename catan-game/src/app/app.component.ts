@@ -5,7 +5,7 @@ import { GameService } from './services/game.service';
 import { GameBoardComponent } from './components/game-board/game-board.component';
 import { PlayerPanelComponent } from './components/player-panel/player-panel.component';
 import { SetupComponent } from './components/setup/setup.component';
-import { GameState } from './models/game.models';
+import { GameState, GamePhase } from './models/game.models';
 
 @Component({
   selector: 'app-root',
@@ -35,5 +35,19 @@ export class AppComponent implements OnInit {
 
   onGameStart(playerNames: string[]): void {
     this.gameService.initializeGame(playerNames);
+  }
+
+  getPhaseText(state: GameState): string {
+    const phaseTexts: { [key in GamePhase]: string } = {
+      [GamePhase.SETUP_SETTLEMENT_1]: 'Setup - Place Settlement',
+      [GamePhase.SETUP_ROAD_1]: 'Setup - Place Road',
+      [GamePhase.SETUP_SETTLEMENT_2]: 'Setup Round 2 - Place Settlement',
+      [GamePhase.SETUP_ROAD_2]: 'Setup Round 2 - Place Road',
+      [GamePhase.ROLL_DICE]: 'Roll Dice',
+      [GamePhase.PLACE_ROBBER]: 'Place the Robber',
+      [GamePhase.MAIN]: 'Main Phase - Build or Trade',
+      [GamePhase.GAME_OVER]: state.winner === null ? 'Game Over' : `Game Over! Winner: ${state.players.find(p => p.id === state.winner)?.name}`
+    };
+    return phaseTexts[state.phase];
   }
 }
