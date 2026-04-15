@@ -1,0 +1,162 @@
+.game-board {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.board-container {
+  background: linear-gradient(135deg, #b8d4e8 0%, #7fb3d5 100%);
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, #b8d4e8 0%, #7fb3d5 100%);
+  padding: 20px;
+  min-height: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 3px solid #8cb4d4;
+}
+
+.board-svg {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+
+  .hex-tile {
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  .terrain-label {
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .vertex-point {
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      r: 8;
+      fill: #FFE082;
+    }
+
+    &:focus {
+      outline: 3px solid #ff9800;
+      outline-offset: 3px;
+    }
+  }
+
+  .settlement {
+    pointer-events: none;
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
+  }
+
+  .city {
+    pointer-events: none;
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
+  }
+
+  .edge-line {
+    cursor: pointer;
+    opacity: 0.3;
+    transition: all 0.2s;
+
+    &:focus {
+      outline: 3px solid #ff9800;
+      outline-offset: 3px;
+      opacity: 0.6;
+    }
+
+    &:hover {
+      opacity: 0.6;
+      stroke-width: 5;
+    }
+  }
+
+  .road {
+    pointer-events: none;
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
+  }
+
+  text {
+    pointer-events: none;
+    user-select: none;
+  }
+}
+
+.board-legend {
+  h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 18px;
+    border-bottom: 2px solid #4CAF50;
+    padding-bottom: 8px;
+  }
+
+  h4 {
+    margin: 15px 0 10px 0;
+    color: #555;
+    font-size: 16px;
+  }
+
+  .legend-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .legend-color {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #333;
+      border-radius: 5px;
+    }
+
+    span {
+      color: #555;
+      font-size: 14px;
+    }
+  }
+
+  .instructions {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 5px;
+
+    ul {
+      margin: 10px 0 0 20px;
+      padding: 0;
+
+      li {
+        margin-bottom: 8px;
+        color: #666;
+        line-height: 1.5;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .board-svg {
+    max-width: 100%;
+  }
+
+  .board-legend {
+    .legend-items {
+      grid-template-columns: 1fr;
+    }
+  }
+}

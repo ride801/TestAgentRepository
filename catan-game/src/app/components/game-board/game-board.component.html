@@ -1,0 +1,247 @@
+<div class="game-board">
+  <div class="board-container card">
+    <svg [attr.viewBox]="viewBox" class="board-svg">
+      <!-- SVG Definitions for Gradients and Filters -->
+      <defs>
+        <!-- Terrain Gradients -->
+        <linearGradient id="forestGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#1e4d2b;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#2d6a3e;stop-opacity:1" />
+        </linearGradient>
+        
+        <linearGradient id="hillsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#a0522d;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#c76e3a;stop-opacity:1" />
+        </linearGradient>
+        
+        <linearGradient id="pastureGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#9bcd9b;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#b8e6b8;stop-opacity:1" />
+        </linearGradient>
+        
+        <linearGradient id="fieldsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#f4d03f;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#ffd700;stop-opacity:1" />
+        </linearGradient>
+        
+        <linearGradient id="mountainsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#696969;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#989898;stop-opacity:1" />
+        </linearGradient>
+        
+        <linearGradient id="desertGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#e8d4a0;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#d4b896;stop-opacity:1" />
+        </linearGradient>
+        
+        <!-- Number Token Gradient -->
+        <radialGradient id="tokenGradient">
+          <stop offset="0%" style="stop-color:#fffae6;stop-opacity:1"/>
+          <stop offset="70%" style="stop-color:#f5e6c3;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#d4c4a1;stop-opacity:1"/>
+        </radialGradient>
+        
+        <!-- Drop Shadow Filter -->
+        <filter id="tokenShadow">
+          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.4"/>
+        </filter>
+        
+        <filter id="hexShadow">
+          <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      
+      <!-- Draw hexes -->
+      <g *ngFor="let hex of hexes" class="hex-group" (click)="onHexClick(hex)">
+        <!-- Hex polygon -->
+        <polygon
+          [attr.points]="getHexPoints(hex.vertices)"
+          [attr.fill]="getTerrainColor(hex.terrain)"
+          [attr.stroke]="hex.hasRobber ? '#FF0000' : '#333'"
+          [attr.stroke-width]="hex.hasRobber ? '3' : '2'"
+          class="hex-tile"
+          filter="url(#hexShadow)"
+        />
+
+        <!-- Number token -->
+        <circle
+          *ngIf="hex.number"
+          [attr.cx]="hex.center.x"
+          [attr.cy]="hex.center.y"
+          r="24"
+          fill="url(#tokenGradient)"
+          stroke="#8B4513"
+          stroke-width="3"
+          filter="url(#tokenShadow)"
+        />
+        <text
+          *ngIf="hex.number"
+          [attr.x]="hex.center.x"
+          [attr.y]="hex.center.y + 7"
+          text-anchor="middle"
+          font-size="20"
+          font-weight="bold"
+          [attr.fill]="hex.number === 6 || hex.number === 8 ? '#CC0000' : '#000'"
+        >
+          {{ hex.number }}
+        </text>
+
+        <!-- Robber -->
+        <text
+          *ngIf="hex.hasRobber"
+          [attr.x]="hex.center.x"
+          [attr.y]="hex.center.y - 15"
+          text-anchor="middle"
+          font-size="30"
+        >
+          🦹
+        </text>
+
+        <!-- Terrain label -->
+        <text
+          [attr.x]="hex.center.x"
+          [attr.y]="hex.number ? hex.center.y + 38 : hex.center.y + 6"
+          text-anchor="middle"
+          font-size="11"
+          font-weight="700"
+          fill="#000"
+          class="terrain-label"
+          stroke="rgba(255,255,255,0.8)"
+          stroke-width="3"
+          paint-order="stroke fill"
+          stroke-linejoin="round"
+        >
+          {{ getTerrainName(hex.terrain) }}
+        </text>
+      </g>
+
+      <!-- Draw vertices (settlement/city locations) -->
+      <g *ngFor="let hex of hexes">
+        <g *ngFor="let vertex of hex.vertices; let i = index">
+          <circle
+            [attr.cx]="vertex.x"
+            [attr.cy]="vertex.y"
+            r="6"
+            fill="#FFF"
+            stroke="#333"
+            stroke-width="2"
+            class="vertex-point"
+            role="button"
+            [attr.aria-label]="'Build settlement at vertex ' + (hex.id * 6 + i)"
+            tabindex="0"
+            (click)="onVertexClick(hex.id * 6 + i, $event)"
+          />
+          
+          <!-- Settlement -->
+          <g *ngIf="getVertexBuilding(hex.id * 6 + i) as building">
+            <rect
+              *ngIf="building.type === 'settlement'"
+              [attr.x]="vertex.x - 8"
+              [attr.y]="vertex.y - 8"
+              width="16"
+              height="16"
+              [attr.fill]="getPlayerColor(building.playerId)"
+              stroke="#000"
+              stroke-width="2"
+              class="settlement"
+            />
+            
+            <!-- City -->
+            <g *ngIf="building.type === 'city'">
+              <rect
+                [attr.x]="vertex.x - 10"
+                [attr.y]="vertex.y - 10"
+                width="20"
+                height="20"
+                [attr.fill]="getPlayerColor(building.playerId)"
+                stroke="#000"
+                stroke-width="2"
+              />
+              <polygon
+                [attr.points]="(vertex.x - 10) + ',' + (vertex.y - 10) + ' ' + 
+                              (vertex.x + 10) + ',' + (vertex.y - 10) + ' ' + 
+                              vertex.x + ',' + (vertex.y - 20)"
+                [attr.fill]="getPlayerColor(building.playerId)"
+                stroke="#000"
+                stroke-width="2"
+                class="city"
+              />
+            </g>
+          </g>
+        </g>
+      </g>
+
+      <!-- Draw edges (road locations) - simplified -->
+      <g *ngFor="let hex of hexes">
+        <g *ngFor="let i of [0, 1, 2, 3, 4, 5]">
+          <line
+            [attr.x1]="hex.vertices[i].x"
+            [attr.y1]="hex.vertices[i].y"
+            [attr.x2]="hex.vertices[(i + 1) % 6].x"
+            [attr.y2]="hex.vertices[(i + 1) % 6].y"
+            stroke="#666"
+            stroke-width="3"
+            class="edge-line"
+            role="button"
+            [attr.aria-label]="'Build road at edge ' + (hex.id * 6 + i)"
+            tabindex="0"
+            (click)="onEdgeClick(hex.id * 6 + i, $event)"
+          />
+          
+          <!-- Road -->
+          <line
+            *ngIf="getEdgeRoad(hex.id * 6 + i) as road"
+            [attr.x1]="hex.vertices[i].x"
+            [attr.y1]="hex.vertices[i].y"
+            [attr.x2]="hex.vertices[(i + 1) % 6].x"
+            [attr.y2]="hex.vertices[(i + 1) % 6].y"
+            [attr.stroke]="getPlayerColor(road.playerId)"
+            stroke-width="6"
+            class="road"
+          />
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="board-legend card">
+    <h3>Legend</h3>
+    <div class="legend-items">
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, #1e4d2b 0%, #2d6a3e 100%);"></div>
+        <span>Forest (Wood 🌲)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, #a0522d 0%, #c76e3a 100%);"></div>
+        <span>Hills (Brick 🧱)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, #9bcd9b 0%, #b8e6b8 100%);"></div>
+        <span>Pasture (Sheep 🐑)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, #f4d03f 0%, #ffd700 100%);"></div>
+        <span>Fields (Wheat 🌾)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, #696969 0%, #989898 100%);"></div>
+        <span>Mountains (Ore ⛰️)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(135deg, #e8d4a0 0%, #d4b896 100%);"></div>
+        <span>Desert</span>
+      </div>
+    </div>
+
+    <div class="instructions">
+      <h4>How to Play:</h4>
+      <ul>
+        <li>Click vertices (circles) to build settlements</li>
+        <li>Click edges (lines) to build roads</li>
+        <li>Click settlements to upgrade to cities</li>
+        <li>Numbers show dice values that produce resources</li>
+        <li>Red numbers (6 & 8) are most common rolls</li>
+      </ul>
+    </div>
+  </div>
+</div>

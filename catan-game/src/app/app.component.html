@@ -1,0 +1,10 @@
+<div class="app-container">
+  <h1 class="game-title">Settlers of Catan</h1>
+  
+  <app-setup *ngIf="!gameStarted" (gameStart)="onGameStart($event)"></app-setup>
+  
+  <div *ngIf="gameStarted && gameState" class="game-container">
+    <app-player-panel [gameState]="gameState"></app-player-panel>
+    <app-game-board [gameState]="gameState"></app-game-board>
+  </div>
+</div>

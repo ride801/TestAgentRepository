@@ -1,0 +1,45 @@
+<div class="setup-container">
+  <div class="setup-card">
+    <h2>Game Setup</h2>
+    
+    <div class="setup-form">
+      <div class="form-group">
+        <label for="playerCount">Number of Players (2-6):</label>
+        <input 
+          id="playerCount"
+          type="number" 
+          [(ngModel)]="playerCount" 
+          (ngModelChange)="onPlayerCountChange()"
+          min="2" 
+          max="6"
+          class="player-count-input">
+      </div>
+
+      <div class="players-section">
+        <h3>Player Names</h3>
+        <div *ngFor="let name of playerNames; let i = index; trackBy: trackByIndex" class="player-input-group">
+          <label>Player {{ i + 1 }}:</label>
+          <input 
+            type="text" 
+            [(ngModel)]="playerNames[i]" 
+            placeholder="Enter name"
+            maxlength="20">
+        </div>
+      </div>
+
+      <button class="primary-btn start-btn" (click)="startGame()">
+        Start Game
+      </button>
+    </div>
+
+    <div class="game-info">
+      <h3>How to Play</h3>
+      <ul>
+        <li>Roll dice to collect resources from adjacent hexes</li>
+        <li>Build settlements, cities, and roads</li>
+        <li>Trade resources with other players</li>
+        <li>First to 10 victory points wins!</li>
+      </ul>
+    </div>
+  </div>
+</div>

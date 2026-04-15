@@ -1,0 +1,207 @@
+<div class="player-panel">
+  <!-- Current Player Info -->
+  <div class="card current-player-card">
+    <h3>Current Player</h3>
+    <div class="player-info" [style.border-left]="'5px solid ' + currentPlayer.color">
+      <div class="player-name">{{ currentPlayer.name }}</div>
+      <div class="player-stats">
+        <div class="stat">
+          <span class="label">Victory Points:</span>
+          <span class="value">{{ currentPlayer.victoryPoints }}</span>
+        </div>
+        <div class="stat">
+          <span class="label">Knights:</span>
+          <span class="value">{{ currentPlayer.knightsPlayed }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resources -->
+  <div class="card resources-card">
+    <h3>Resources</h3>
+    <div class="resources-list">
+      <div *ngFor="let resource of resourceTypes" class="resource-item">
+        <span class="resource-icon">{{ getResourceIcon(resource) }}</span>
+        <span class="resource-name">{{ resource }}</span>
+        <span class="resource-count">{{ getResourceCount(currentPlayer, resource) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Phase Info -->
+  <div class="card phase-card">
+    <h3>Game Phase</h3>
+    <div class="phase-info">
+      <div *ngIf="gameState.phase === GamePhase.SETUP_SETTLEMENT_1 || gameState.phase === GamePhase.SETUP_SETTLEMENT_2">
+        Place a Settlement
+      </div>
+      <div *ngIf="gameState.phase === GamePhase.SETUP_ROAD_1 || gameState.phase === GamePhase.SETUP_ROAD_2">
+        Place a Road
+      </div>
+      <div *ngIf="gameState.phase === GamePhase.ROLL_DICE">
+        Roll the Dice
+      </div>
+      <div *ngIf="gameState.phase === GamePhase.PLACE_ROBBER">
+        Place the Robber
+      </div>
+      <div *ngIf="gameState.phase === GamePhase.MAIN">
+        Main Phase - Build or Trade
+      </div>
+      <div *ngIf="gameState.phase === GamePhase.GAME_OVER" class="game-over">
+        Game Over! Winner: {{ gameState.players.find(p => p.id === gameState.winner)?.name }}
+      </div>
+      <div *ngIf="gameState.diceRoll" class="dice-result">
+        Last Roll: {{ gameState.diceRoll }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="card actions-card">
+    <h3>Actions</h3>
+    <div class="actions-grid">
+      <button 
+        *ngIf="gameState.phase === GamePhase.ROLL_DICE"
+        class="primary-btn action-btn"
+        (click)="rollDice()">
+        🎲 Roll Dice
+      </button>
+
+      <button 
+        *ngIf="gameState.phase === GamePhase.MAIN || gameState.phase.includes('setup')"
+        class="secondary-btn action-btn"
+        (click)="buildSettlement()"
+        [disabled]="gameState.phase === GamePhase.MAIN && !canBuySettlement()">
+        🏠 Settlement (W,B,S,Wh)
+      </button>
+
+      <button 
+        *ngIf="gameState.phase === GamePhase.MAIN"
+        class="secondary-btn action-btn"
+        (click)="buildCity()"
+        [disabled]="!canBuyCity()">
+        🏛️ City (3O, 2Wh)
+      </button>
+
+      <button 
+        *ngIf="gameState.phase === GamePhase.MAIN || gameState.phase.includes('setup')"
+        class="secondary-btn action-btn"
+        (click)="buildRoad()"
+        [disabled]="gameState.phase === GamePhase.MAIN && !canBuyRoad()">
+        🛤️ Road (W, B)
+      </button>
+
+      <button 
+        *ngIf="gameState.phase === GamePhase.MAIN"
+        class="secondary-btn action-btn"
+        (click)="buyDevelopmentCard()"
+        [disabled]="!canBuyDevCard()">
+        🎴 Dev Card (O,Wh,S)
+      </button>
+
+      <button 
+        *ngIf="gameState.phase === GamePhase.MAIN"
+        class="secondary-btn action-btn"
+        (click)="openTradeDialog()">
+        🤝 Trade
+      </button>
+
+      <button 
+        *ngIf="gameState.phase === GamePhase.MAIN"
+        class="danger-btn action-btn"
+        (click)="endTurn()">
+        ⏭️ End Turn
+      </button>
+    </div>
+  </div>
+
+  <!-- All Players -->
+  <div class="card players-card">
+    <h3>All Players</h3>
+    <div class="players-list">
+      <div *ngFor="let player of gameState.players" 
+           class="player-item"
+           [class.active]="player.id === currentPlayer.id"
+           [style.border-left]="'4px solid ' + player.color">
+        <div class="player-header">
+          <span class="player-name">{{ player.name }}</span>
+          <span class="player-vp">{{ player.victoryPoints }} VP</span>
+        </div>
+        <div class="player-resources">
+          Total cards: {{ getTotalResources(player) }}
+        </div>
+        <div class="player-achievements">
+          <span *ngIf="player.longestRoad" class="achievement">🛤️ Longest Road</span>
+          <span *ngIf="player.largestArmy" class="achievement">⚔️ Largest Army</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trade Offers -->
+  <div *ngIf="gameState.tradeOffers.length > 0" class="card trades-card">
+    <h3>Active Trades</h3>
+    <div *ngFor="let trade of gameState.tradeOffers; let i = index" class="trade-item">
+      <div class="trade-from">
+        From: {{ gameState.players.find(p => p.id === trade.offeringPlayerId)?.name }}
+      </div>
+      <div class="trade-details">
+        Offers: (see trade details)
+      </div>
+      <div class="trade-details">
+        Wants: (see trade details)
+      </div>
+      <button 
+        *ngIf="trade.status === 'pending' && trade.offeringPlayerId !== currentPlayer.id"
+        class="primary-btn"
+        (click)="acceptTrade(i)">
+        Accept
+      </button>
+      <div *ngIf="trade.status !== 'pending'" class="trade-status">
+        {{ trade.status }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Trade Dialog -->
+<div *ngIf="showTradeDialog" class="modal-overlay" (click)="closeTradeDialog()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h2>Create Trade Offer</h2>
+    
+    <div class="trade-section">
+      <h3>You Offer</h3>
+      <div class="resource-selectors">
+        <div *ngFor="let resource of resourceTypes" class="resource-selector">
+          <span>{{ getResourceIcon(resource) }}</span>
+          <input 
+            type="number" 
+            min="0" 
+            [max]="getResourceCount(currentPlayer, resource)"
+            [ngModel]="getTradeOfferValue(resource)"
+            (ngModelChange)="setTradeOfferValue(resource, $event)">
+        </div>
+      </div>
+    </div>
+
+    <div class="trade-section">
+      <h3>You Request</h3>
+      <div class="resource-selectors">
+        <div *ngFor="let resource of resourceTypes" class="resource-selector">
+          <span>{{ getResourceIcon(resource) }}</span>
+          <input 
+            type="number" 
+            min="0"
+            [ngModel]="getTradeRequestValue(resource)"
+            (ngModelChange)="setTradeRequestValue(resource, $event)">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="primary-btn" (click)="proposeTrade()">Propose Trade</button>
+      <button class="secondary-btn" (click)="closeTradeDialog()">Cancel</button>
+    </div>
+  </div>
+</div>
